@@ -1,0 +1,124 @@
+import depositos.*
+import trenes.*
+
+describe "Trenes y depositos" {
+  test "Un vagón pasajeros de 10 metros de largo y 2 de ancho útil puede llevar 80 pasajeros" {
+    const vagon = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    assert.equals(80, vagon.cantidadDePasajeros())
+  }
+
+  test "Un vagón pasajeros de 10 metros de largo y 3 de ancho útil puede llevar 100 pasajeros" {
+    const vagon = new VagonDePasajeros(largo = 10, anchoUtil = 3)
+    assert.equals(100, vagon.cantidadDePasajeros())
+  }
+
+  test "Locomotora pesa 1000 kg, puede arrastrar hasta 12000 kg, y su velocidad máxima es de 80 km/h" {
+    const locomotora = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    assert.equals(11000, locomotora.arrastreUtil())
+  }
+  test "Añadir un vagón a una formación" {
+    const formacion = new Formacion(locomotoras = [], vagones = [])
+    const vagon = new VagonDePasajeros(largo = 10, anchoUtil = 3)
+    formacion.agregarVagon(vagon)
+    assert.that(formacion.vagones().contains(vagon))
+  }
+
+  test "Agregar una locomotora a una formación" {
+    const formacion = new Formacion(locomotoras = [], vagones = [])
+    const locomotora = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    formacion.agregarLocomotora(locomotora)
+    assert.that(formacion.locomotoras().contains(locomotora))
+  }
+
+  test "Saber la cantidad de vagones que tiene una formación" {
+    const formacion = new Formacion(locomotoras = [], vagones = [])
+    assert.equals(0, formacion.cantidadDeVagones())
+  }
+
+  test "Conocer el total de pasajeros que puede transportar una formación" {
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 10, anchoUtil = 3)
+    const formacion = new Formacion(locomotoras = [], vagones = [vagon1, vagon2])
+    assert.equals(180, formacion.totalDePasajeros())
+  }
+
+  test "Determinar cuántos vagones livianos tiene una formación. Un vagón es liviano si su peso máximo es menor a 2500 kg" {
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 1, anchoUtil = 3)
+    const formacion = new Formacion(locomotoras = [], vagones = [vagon1, vagon2])
+    assert.equals(1, formacion.totalDeVagonesLivianos())
+  }
+
+  test "Calcular la velocidad máxima de una formación, que es el mínimo entre las velocidades máximas de las locomotoras" {
+    const locomotora1 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    const locomotora2 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 120)
+    const locomotora3 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 40)
+    const formacion = new Formacion(locomotoras = [locomotora1, locomotora2, locomotora3], vagones = [])
+    assert.equals(40, formacion.velocidadMaxima())
+  }
+
+  test "Responder si una formación es eficiente. Es eficiente si cada una de sus locomotoras arrastra, al menos, cinco veces su peso" {
+    const locomotora1 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    const locomotora2 = new Locomotora(peso = 100, pesoMaximoDeArrastre = 500, velocidadMaxima = 120)
+    const locomotora3 = new Locomotora(peso = 1, pesoMaximoDeArrastre = 5, velocidadMaxima = 40)
+    const formacion = new Formacion(locomotoras = [locomotora1, locomotora2, locomotora3], vagones = [])
+    assert.that(formacion.esEficiente())
+  }
+
+  test "Contestar si una formación puede moverse. Esto ocurre si el arrastre útil total de las locomotoras es mayor o igual al peso máximo total de los vagones" {
+    const locomotora1 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    const locomotora2 = new Locomotora(peso = 100, pesoMaximoDeArrastre = 500, velocidadMaxima = 120)
+    const locomotora3 = new Locomotora(peso = 1, pesoMaximoDeArrastre = 5, velocidadMaxima = 40)
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 1, anchoUtil = 3)
+    const formacion = new Formacion(locomotoras = [locomotora1, locomotora2, locomotora3], vagones = [vagon1, vagon2])
+    assert.equals(7200, formacion.pesoMaximoTotalVagones())
+    assert.equals(11404, formacion.arrastreUtilTotal())
+    assert.that(formacion.puedeMoverse())
+  }
+
+  test "Denotar cuántos kilos de empuje le faltan a una formación para poder moverse, que es la diferencia entre el peso máximo total de los vagones y el arrastre útil total de las locomotoras" {
+    const locomotora1 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 7200, velocidadMaxima = 80)
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 1, anchoUtil = 3)
+    const formacion = new Formacion(locomotoras = [locomotora1], vagones = [vagon1, vagon2])
+    assert.equals(6200, formacion.arrastreUtilTotal())
+    assert.equals(1000, formacion.kilosDeEmpujeFaltantes())
+  }
+
+  test "Dado un depósito, obtener el conjunto formado por el vagón más pesado de cada formación; se espera un conjunto de vagones" {
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 1, anchoUtil = 3)
+    const formacion1 = new Formacion(locomotoras = [], vagones = [vagon1, vagon2])
+    const formacion2 = new Formacion(locomotoras = [], vagones = [vagon1])
+    const deposito = new Deposito(formaciones = [formacion1, formacion2], locomotorasSueltas = [])
+    assert.equals([vagon1, vagon1], deposito.vagonesMasPesados())
+  }
+
+  // Una formación es compleja si: tiene más de 20 unidades (sumando locomotoras y vagones) o
+  // El peso total (sumando locomotoras y vagones) es de más de 10000 kg.
+  test "Argumentar si un depósito necesita un conductor experimentado. Un depósito necesita un conductor experimentado si alguna de sus formaciones es compleja" {
+    const locomotora1 = new Locomotora(peso = 2801, pesoMaximoDeArrastre = 7200, velocidadMaxima = 80)
+    const vagon1 = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const vagon2 = new VagonDePasajeros(largo = 1, anchoUtil = 3)
+    const formacion1 = new Formacion(locomotoras = [locomotora1], vagones = [vagon1, vagon2])
+    const formacion2 = new Formacion(locomotoras = [], vagones = [vagon1])
+    const deposito = new Deposito(formaciones = [formacion1, formacion2], locomotorasSueltas = [])
+    assert.equals(10001, formacion1.pesoTotal())
+    assert.equals(6400, formacion2.pesoTotal())
+    assert.that(deposito.necesitaUnConductorExperimentado())
+  }
+  
+  // Si la formación ya puede moverse, entonces no se hace nada.
+  // Si no, se le agrega una locomotora suelta del depósito cuyo arrastre útil sea mayor o igual a los kilos de empuje que le faltan a la formación. 
+  // Si no hay ninguna locomotora suelta que cumpla esta condición, no se hace nada.
+  test "Agregar, dentro de un depósito, una locomotora a una formación determinada, de forma tal que la formación pueda moverse" {
+    const locomotora1 = new Locomotora(peso = 1000, pesoMaximoDeArrastre = 12000, velocidadMaxima = 80)
+    const vagon = new VagonDePasajeros(largo = 10, anchoUtil = 2)
+    const formacion = new Formacion(locomotoras = [], vagones = [vagon])
+    const deposito = new Deposito(formaciones = [formacion], locomotorasSueltas = [])
+    assert.that(not formacion.puedeMoverse())
+    deposito.agregarLocomotora(locomotora1, formacion)
+    assert.that(formacion.puedeMoverse())
+  }
+}
